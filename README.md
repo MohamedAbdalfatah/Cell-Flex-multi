@@ -270,7 +270,7 @@ subproject = sys.argv[4]
 data = [
     ["[gene-expression]",],
     ["reference","/scratch/groups/singlecell/data/reference/refdata-gex-GRCh38-2020-A",],
-    ["probe-set","/scratch/groups/singlecell/software/cellranger/7.1.0/probe_sets",],
+    ["probe-set","/scratch/groups/singlecell/software/cellranger/7.1.0/probe_sets/Chromium_Human_Transcriptome_Probe_Set_v1.0.1_GRCh38-2020-A.csv",],
     ["no-bam", "true",],
     ["expect-cells", cells,],
     ["[libraries]",],
@@ -357,5 +357,4 @@ cd jobs/CNAG_61_CellFlex_A
 sbatch CNAG_61_CellFlex_A.cmd
 cd jobs/CNAG_61_CellFlex_B
 sbatch CNAG_61_CellFlex_B.cmd
-
 ```
