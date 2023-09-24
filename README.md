@@ -268,6 +268,7 @@ The multi config CSV contains both the library definitions and experimental desi
 - The [samples] section has two required columns that specify sample information for Fixed RNA Gene Expression with multiple samples or a single sample with multiple Probe Barcodes; it is not valid for **singleplex** Fixed RNA Profiling analysis.
 
 **NOTE**: Our analysis here is for singleplex GEX 
+You can know more about this from here https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/multi-frp#probe-set-files
 
 ### The script 
 
