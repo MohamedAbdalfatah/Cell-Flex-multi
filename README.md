@@ -317,6 +317,7 @@ print(f"CSV file '{output_file_path}' created successfully.")
 
 ### How to run 
 There is four variables in this script:
+
 1- The number of expected cells (Ask wet lab)
 
 2- path of FASTQs (you should know this when you run copy FASTQs script)
