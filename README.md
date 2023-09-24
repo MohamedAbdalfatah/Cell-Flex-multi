@@ -316,10 +316,13 @@ print(f"CSV file '{output_file_path}' created successfully.")
 ```
 
 ### How to run 
-There is two variables in this script:
+There is four variables in this script:
 1- The number of expected cells (Ask wet lab)
+
 2- path of FASTQs (you should know this when you run copy FASTQs script)
+
 3- subproject and  sample (gem_id) [it is use to save the config.csv file in this path /home/groups/singlecell/mabdalfttah/projects/{subproject}/jobs/{sample}/config.csv]
+
 
 ```{}
 python 4-create_config_csv.py 8000 CNAG_61_CellFlex_A /home/groups/singlecell/mabdalfttah/projects/SCGTEST_51/jobs/CNAG_61_CellFlex_A/fastq  SCGTEST_51
@@ -330,6 +333,7 @@ python 4-create_config_csv.py 8000 CNAG_61_CellFlex_B /home/groups/singlecell/ma
 Finaly last but least we will create a job script to run cellranger on the cluster, this job script contain an inportant information for the cluster and the cellranger command.
 
 **Note**: since this kit in new kit, so the new cellranger versions of cellranger used to analyze this data, here we use cellranger 7.1.0, and it is installed in **/scratch/groups/singlecell/software/cellranger/7.1.0/cellranger**
+
 **NOTE**: we use cellranger multi not count even for singleplex fixed Gene-expression 
 
 ```{}
@@ -387,6 +391,7 @@ chmod +x create_cmd_file.sh
 ```
 
 Finally we submit the jobs and going home 
+
 ```{}
 cd jobs/CNAG_61_CellFlex_A
 sbatch CNAG_61_CellFlex_A.cmd
