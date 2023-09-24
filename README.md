@@ -1,6 +1,11 @@
-# Cell-Flex-multi
+# Cell-Flex-multi (singleplex)
+Here we are going to analyze a new 10x genomics in the lab called cellflex, Fixation with paraformaldehyde (PFA) allows samples to be collected, shipped to a central location, and analyzed without sacrificing integrity or data quality, creating new possibilities for sample accessibility, throughput, and batched analysis. you can learn more about this new kit from here: https://www.10xgenomics.com/products/single-cell-gene-expression-flex
 
-# 3- Get LIMS info
+We are going to analyze SCGTEST_51 which is the first test of this kit, it is 2 samples and we are going to follow this toutorial from 10X: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/multi-frp#probe-set-files
+
+To work with this we need to get lims information, which is all thing about the project we are analyze 
+
+# 1- Get LIMS info
 
 ### The script 
 ```
@@ -14,20 +19,24 @@ echo "Created LIMS information file: lims_info.txt"
 ```
 ### How to run
 
+**Note**: make sure you write the righ path of a script called limsq.py which is the main script to get the lins info
+
 ```
 ./1-lims.sh SCGTEST_49
 ```
-Now we have lims_info_SCGTEST_49.txt with all of information of the samples and project
+Now we have lims_info_SCGTEST_51.txt with all of information of the samples and project
 
-since some fastq files/samples doesn't pass the filters we need to remove them from the lims_info_SCGTEST_49.txt file 
+Since some fastq files/samples doesn't pass the filters of QC we need to remove them from the lims_info_SCGTEST_51.txt file 
 
 ```
-awk -F'\t' -v column="LanePassFail" 'BEGIN {OFS=FS} NR==1 {for (i=1; i<=NF; i++) if ($i == column) col=i} $col != "fail"' lims_info_SCGTEST_49.txt > tmp_file && mv tmp_file lims_info_SCGTEST_49.txt
+awk -F'\t' -v column="LanePassFail" 'BEGIN {OFS=FS} NR==1 {for (i=1; i<=NF; i++) if ($i == column) col=i} $col != "fail"' lims_info_SCGTEST_51.txt > tmp_file && mv tmp_file lims_info_SCGTEST_51.txt
 ```
 
 We have filterd lims file, we are ready for the next step 
 
-# 4- Get FASTQs Path
+# 2- Get FASTQs Path
+
+We need to know where is the FASTQs path of our project, to have this we need to run this script, which is use the lims info file and write the path of the FASTQs, usually the FASTQs are in this path **/scratch/project/production/fastq** if they are not you need to change this path 
 
 ### The script 
 ```
@@ -89,24 +98,27 @@ fastq_df = pd.DataFrame(fastq_dict)
 fastq_df.to_csv("fastq_paths.tab".format(subproject), header = True, index = False, sep="\t")
 ```
 ### How to run 
-First we need to activate any conda env with python:
+
+**NOTE**: First we need to activate any conda env with python:
 ```
 source ~/.bashrc
 conda activate sc_py
 ```
 Run the script 
 ```
-python 2-write_fastq_paths.py --subproject SCGTEST_49 --info_file lims_info_SCGTEST_49.txt
+python 2-write_fastq_paths.py --subproject SCGTEST_51 --info_file lims_info_SCGTEST_51.txt
 ```
 
-# 5- Create a Metadata File
-This step should be in R 
+# 3- Create a Metadata File
+This step is about create a metadata file from lims infor file, it is just information about our samples and which library they they are in, it is a different format of LIMS with just the important information
+
+**This step should be in R**
 
 ```
 Path = "../Downloads/"
 library(tidyverse)
 #===============================================================================
-Files = list.files(paste0(Path), pattern = "lims_info_SCGTEST_49.txt")
+Files = list.files(paste0(Path), pattern = "lims_info_SCGTEST_51.txt")
 All_Files = list()
 metadata = list()
 for (i in seq_along(Files)) {
@@ -118,13 +130,13 @@ for (i in seq_along(Files)) {
   metadata[[i]]$gem_id = str_replace_all(string = metadata[[i]]$gem_id, pattern = "\\.", replacement = "_")
   
 }
-write.csv(metadata[[1]],paste0("../Downloads/SCGTEST_49.csv"), row.names = F)
+write.csv(metadata[[1]],paste0("../Downloads/SCGTEST_51.csv"), row.names = F)
 ```
-Now we have SCGTEST_49.csv metadata file, let's go for the next step
+Now we have SCGTEST_51.csv metadata file, let's go for the next step
 
-# 6- Create a jobs directories and copy FASTQs to them
+# 4- Create a jobs directories and copy FASTQs to them
 
-In this script we create a directory for each samples and copy the fASTQs files to this directory 
+In this script we create a directory for each samples (We know from metadata) and copy the FASTQs files to this directory, wiht this we will have the FASTQs of each sample in seperate diretory to pass this directory when we run cellranger (it run per sample seperatly)
 
 ### The script 
 ```
@@ -242,11 +254,20 @@ create_fastq_symlink_nh(gem_id, fastq_sub_df, fastq_dir)
 
 ### How to run
 ```
-python 3-copy_fastqs  --subproject SCGTEST_49 --fastq_paths fastq_paths.tab --metadata SCGTEST_49.csv --gem_id CNAG_81_GEX1
-python 3-copy_fastqs  --subproject SCGTEST_49 --fastq_paths fastq_paths.tab --metadata SCGTEST_49.csv --gem_id CNAG_81_GEX2
+python 3-copy_fastqs  --subproject SCGTEST_51 --fastq_paths fastq_paths.tab --metadata SCGTEST_51.csv --gem_id CNAG_61_CellFlex_A
+python 3-copy_fastqs  --subproject SCGTEST_51 --fastq_paths fastq_paths.tab --metadata SCGTEST_51.csv --gem_id CNAG_61_CellFlex_B
 ```
 
 # Create Config csv file 
+All pevoius steps was internal steps to make the FASTQs ready to analyze, but from here the steps are realted to cellranger irself, the first thing we need to do for cellranger is to create a config file.
+The multi config CSV contains both the library definitions and experimental design variables. The required sections differ slightly for analysis with single-sample ("singleplex") vs. multiplexed configurations. It is composed of up to four sections for FRP data:
+
+-  The [gene-expression] section has two columns that specify parameters relevant to analysis of gene expression data, such as reference genome and cell-calling parameters that apply to the whole library in the case of singleplex Fixed RNA Profiling.
+- The [feature] section has two columns that specify parameters relevant to analysis of Feature Barcode libraries; required when analyzing singleplex Fixed RNA Profiling data with Cell Surface Protein ("Antibody Capture" library).
+- The [libraries] section has three required columns that specify where the input FASTQ files may be found.
+- The [samples] section has two required columns that specify sample information for Fixed RNA Gene Expression with multiple samples or a single sample with multiple Probe Barcodes; it is not valid for **singleplex** Fixed RNA Profiling analysis.
+
+**NOTE**: Our analysis here is for singleplex GEX 
 
 ### The script 
 
@@ -293,12 +314,21 @@ print(f"CSV file '{output_file_path}' created successfully.")
 ```
 
 ### How to run 
+There is two variables in this script:
+1- The number of expected cells (Ask wet lab)
+2- path of FASTQs (you should know this when you run copy FASTQs script)
+3- subproject and  sample (gem_id) [it is use to save the config.csv file in this path /home/groups/singlecell/mabdalfttah/projects/{subproject}/jobs/{sample}/config.csv]
+
 ```{}
 python 4-create_config_csv.py 8000 CNAG_61_CellFlex_A /home/groups/singlecell/mabdalfttah/projects/SCGTEST_51/jobs/CNAG_61_CellFlex_A/fastq  SCGTEST_51
 python 4-create_config_csv.py 8000 CNAG_61_CellFlex_B /home/groups/singlecell/mabdalfttah/projects/SCGTEST_51/jobs/CNAG_61_CellFlex_B/fastq  SCGTEST_51
 ```
 
 # Create a job file
+Finaly last but least we will create a job script to run cellranger on the cluster, this job script contain an inportant information for the cluster and the cellranger command.
+
+**Note**: since this kit in new kit, so the new cellranger versions of cellranger used to analyze this data, here we use cellranger 7.1.0, and it is installed in **/scratch/groups/singlecell/software/cellranger/7.1.0/cellranger**
+**NOTE**: we use cellranger multi not count even for singleplex fixed Gene-expression 
 
 ```{}
 #!/bin/bash
@@ -346,15 +376,20 @@ EOF
 echo "Created .cmd file: $output_file_path"
 ```
 
+### How to run 
+
 ```{}
 chmod +x create_cmd_file.sh
 ./5-create_job_script.sh CNAG_61_CellFlex_A SCGTEST_51
 ./5-create_job_script.sh CNAG_61_CellFlex_B SCGTEST_51
 ```
 
+Finally we submit the jobs and going home 
 ```{}
 cd jobs/CNAG_61_CellFlex_A
 sbatch CNAG_61_CellFlex_A.cmd
 cd jobs/CNAG_61_CellFlex_B
 sbatch CNAG_61_CellFlex_B.cmd
 ```
+
+When cellranger finish you will found a directory with the name of the sample contain all of the result from the run 
