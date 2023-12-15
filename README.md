@@ -115,22 +115,20 @@ This step is about create a metadata file from lims infor file, it is just infor
 **This step should be in R**
 
 ```
-Path = "../Downloads/"
-library(tidyverse)
-#===============================================================================
-Files = list.files(paste0(Path), pattern = "lims_info_SCGTEST_51.txt")
-All_Files = list()
-metadata = list()
-for (i in seq_along(Files)) {
-  All_Files[[i]] = read.table(paste0(Path, Files[i]), sep = "\t", header = T)
-  metadata[[i]] = data.frame(subproject = All_Files[[i]]$subproject, gem_id = All_Files[[i]]$SampleName,
-                             library_id = All_Files[[i]]$id, library = All_Files[[i]]$library,
-                             type = "not_hashed",donor_id = All_Files[[i]]$SampleName, flowcell = All_Files[[i]]$flowcell,
-                             lane = All_Files[[i]]$lane, index = All_Files[[i]]$index)
-  metadata[[i]]$gem_id = str_replace_all(string = metadata[[i]]$gem_id, pattern = "\\.", replacement = "_")
-  
-}
-write.csv(metadata[[1]],paste0("../Downloads/SCGTEST_51.csv"), row.names = F)
+subproject = "SCGTEST_52"
+data <- read.table(glue::glue("Y:/projects/{subproject}/lims_info_{subproject}.txt"), header = T, sep = "\t")
+
+metadata = data.frame(subproject = unique(data$subproject),
+                      gem_id = unique(data$SampleName),
+                      library_id = unique(data$id),
+                      library = unique(data$library),
+                      type = "not_hashed",
+                      donor_id = unique(data$SampleName),
+                      flowcell = unique(data$flowcell),
+                      lane = unique(data$lane),
+                      index = unique(data$index))
+
+write.csv(x = metadata, glue::glue("Y:/projects/{subproject}/metadata.csv"), row.names = F)
 ```
 Now we have SCGTEST_51.csv metadata file, let's go for the next step
 
